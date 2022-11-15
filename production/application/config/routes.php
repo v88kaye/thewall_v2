@@ -64,4 +64,5 @@ $route['submit_login_form'] = 'main/submit_login_form';
 $route['submit_registration_form'] = 'main/submit_registration_form';
 $route['post_message'] = 'main/post_message';
 $route['post_comment'] = 'main/post_comment';
-
+$route['delete_message'] = 'main/delete_message';
+$route['delete_comment'] = 'main/delete_comment';

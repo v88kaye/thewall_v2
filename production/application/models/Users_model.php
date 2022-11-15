@@ -7,8 +7,7 @@ class Users_model extends CI_Model {
     }
 
     public function submit_registration_form($user_data = array()) {
-        $is_registered['status'] = FALSE;
-        $is_registered['message'] = "Failed to register user.";
+        $is_registered = array('status' => FALSE, 'message' => "Failed to register user.");
 
         if($user_data['email'] != '' && $user_data['password'] != ''){
             /* Check if user email already exists */
@@ -32,16 +31,14 @@ class Users_model extends CI_Model {
     }
 
     public function submit_login_form($user_data = array()) {
-        $is_login['status'] = FALSE;
-        $is_login['message'] = "Failed to login user.";
+        $is_login = array('status' => FALSE, 'message' => "Failed to login user.");
 
         if($user_data['email'] != '' && $user_data['password'] != ''){
             /* Check if user exists */
             $user = $this->db->select('id AS user_id, first_name, password')
-                                    ->from('users')
-                                    ->where('email', $user_data['email'])
-                                    // ->where('password', $user_data['password'])
-                                    ->get()->row_array();
+                            ->from('users')
+                            ->where('email', $user_data['email'])
+                            ->get()->row_array();
 
             if($user) {
                 if($user['password'] == $user_data['password']){

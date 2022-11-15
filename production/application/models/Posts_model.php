@@ -6,43 +6,42 @@ class Posts_model extends CI_Model {
         $this->load->database();
     }
 
-    public function post_message($message_data = array()){
-        $message_posted['status'] = FALSE;
-        $message_posted['message'] = "Unable to post message.";
+    public function post_message($message_data = array()) {
+		$message_posted = array('status' => FALSE, 'message' => "Unable to post message.");
 
         if($message_data){
             $message_posted['status'] = $this->db->insert('messages', $message_data);
             $message_posted['message_id'] = $this->db->insert_id();
-            $message_posted['message'] = "Message successfully posted.";
+            $message_posted['message'] = "Message succesfully posted.";
         }
 
         return $message_posted;
-    }
+	}
 
-    public function post_comment($comment_data = array()){
-        $comment_posted['status'] = FALSE;
-        $comment_posted['message'] = "Unable to post comment.";
+    public function post_comment($comment_data = array()) {
+		$comment_posted = array('status' => FALSE, 'message' => "Unable to post comment.");
 
         if($comment_data){
-            $comment_posted['status'] = $this->db->insert('comments', $comment_data);
-            $comment_posted['comment_id'] = $this->db->insert_id();
-            $comment_posted['message'] = "Comment successfully posted.";
+            $message_posted['status'] = $this->db->insert('comments', $comment_data);
+            $message_posted['comment_id'] = $this->db->insert_id();
+            $message_posted['message'] = "Comment succesfully posted.";
         }
 
-        return $comment_posted;
-    }
+        return $message_posted;
+	}
 
-    public function fetch_all_messages(){
-        $messages_query = $this->db->query('SELECT JSON_ARRAYAGG(message_data) AS messages
-        FROM (
-            SELECT 
-                JSON_OBJECT(
-                    "message_id", messages.id,
-                    "message", ANY_VALUE(messages.message),
-                    "user_name", CONCAT(ANY_VALUE(users.first_name), " ", ANY_VALUE(users.last_name)),
-                    "message_created_at", ANY_VALUE(messages.created_at),
-                    "comments", ANY_VALUE(message_comments.comments)
-                ) AS message_data
+    public function fetch_all_messages() {
+		$message_query = $this->db->query('
+        SELECT JSON_ARRAYAGG(message_data) AS messages
+        FROM(
+            SELECT JSON_OBJECT(
+                "message_id", messages.id,
+                "message", ANY_VALUE(messages.message),
+                "user_name", CONCAT(ANY_VALUE(users.first_name), " ", ANY_VALUE(users.last_name)),
+                "message_user_id", messages.user_id,
+                "message_created_at", messages.created_at,
+                "comments", ANY_VALUE(message_comments.comments)
+            ) AS message_data
             FROM messages
             LEFT JOIN (
                 SELECT message_id, JSON_ARRAYAGG(comment_data) AS comments
@@ -52,8 +51,9 @@ class Posts_model extends CI_Model {
                             "message_id", message_id,
                             "comment_id", comments.id,
                             "comment", comment,
-                            "user_name", CONCAT(users.first_name, " ", users.last_name),
-                            "comment_created_at", comments.created_at         
+                            "user_name", CONCAT(ANY_VALUE(users.first_name), " ", ANY_VALUE(users.last_name)),
+                            "comment_user_id", comments.user_id,
+                            "comment_created_at", comments.created_at
                         ) AS comment_data
                     FROM comments
                     INNER JOIN users ON users.id = comments.user_id
@@ -66,10 +66,38 @@ class Posts_model extends CI_Model {
             ORDER BY messages.id DESC
         ) AS all_messages');
 
-        $messages_result = $messages_query->result_array();
-        $messages_query->free_result();
-        $all_messages = json_decode($messages_result[0]['messages'], TRUE);
-
+        $message_result = $message_query->result_array();
+        $message_query->free_result();
+        $all_messages = json_decode($message_result[0]['messages'], TRUE);
+        
         return $all_messages;
-    }
+	}
+
+    public function delete_message($message_id, $user_id) {
+		$message_deleted = array('status' => FALSE, 'message' => "Unable to delete message.");
+
+        $delete_message = $this->db->where('id', $message_id)
+                                    ->where('user_id', $user_id)
+                                    ->delete('messages');
+
+        if($delete_message){
+            $message_deleted = array('status' => TRUE, 'message' => "Message deleted.");
+        }
+
+        return $message_deleted;
+	}
+
+    public function delete_comment($comment_id, $user_id) {
+		$comment_deleted = array('status' => FALSE, 'message' => "Unable to delete comment.");
+
+        $delete_comment = $this->db->where('id', $comment_id)
+                                    ->where('user_id', $user_id)
+                                    ->delete('comments');
+
+        if($delete_comment){
+            $comment_deleted = array('status' => TRUE, 'message' => "Comment deleted.");
+        }
+
+        return $comment_deleted;
+	}
 }
